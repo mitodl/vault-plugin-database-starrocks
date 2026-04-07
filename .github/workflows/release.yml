@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build linux/amd64 binary
+        run: |
+          GOOS=linux GOARCH=amd64 go build \
+            -trimpath \
+            -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            -o vault-plugin-database-starrocks \
+            ./cmd/vault-plugin-database-starrocks
+
+      - name: Compute SHA256
+        id: sha256
+        run: |
+          sha256sum vault-plugin-database-starrocks > SHA256SUMS
+          echo "sha256=$(sha256sum vault-plugin-database-starrocks | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          cat SHA256SUMS
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            vault-plugin-database-starrocks
+            SHA256SUMS
+          generate_release_notes: true
+          body: |
+            ## SHA256
+
+            ```
+            ${{ steps.sha256.outputs.sha256 }}  vault-plugin-database-starrocks
+            ```
+
+            Update `VAULT_PLUGIN_STARROCKS_VERSION` and `VAULT_PLUGIN_STARROCKS_SHA256`
+            in `src/bridge/lib/versions.py` in ol-infrastructure to deploy this release.
