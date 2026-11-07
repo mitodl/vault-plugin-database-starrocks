@@ -3,7 +3,7 @@ module github.com/mitodl/vault-plugin-database-starrocks
 go 1.25.7
 
 require (
-	github.com/go-sql-driver/mysql v1.10.0
+	github.com/go-sql-driver/mysql v1.10.1
 	github.com/hashicorp/vault/api v1.23.0
 	github.com/hashicorp/vault/sdk v0.25.1
 )
